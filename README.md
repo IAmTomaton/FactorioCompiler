@@ -3,6 +3,8 @@
 FactorioComputer is a simple computer built from the combinators in Factorio.
 [FactorioComputerBlueprint.txt](FactorioComputerBlueprint.txt)
 
+![](preview.jpg)
+
 FactorioComputer includes:
   - Expandable ROM and RAM.
   - Arithmetic logic unit capable of performing all basic arithmetic and Boolean operations on integers.
