@@ -58,8 +58,7 @@ two_seat_operation_to_machine_cmd = {
     '==': 'qe',
     '>=': 'geth',
     '<=': 'leth',
-    '!=': 'neq',
-    'not': 'not',
+    '!=': 'neq'
 }
 
 one_seat_operation_to_machine_cmd = {
