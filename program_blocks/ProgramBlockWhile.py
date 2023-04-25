@@ -6,7 +6,6 @@ from program_blocks.ProgramBlock import ProgramBlock
 
 class ProgramBlockWhile(ProgramBlock):
     regex = r'while (.*):'
-    end_prefix = '__end_range_'
 
     def __init__(self, entry_command, block):
         super().__init__(entry_command, block)
