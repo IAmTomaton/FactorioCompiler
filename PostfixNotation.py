@@ -69,20 +69,17 @@ class PostfixNotation:
 
 
 def _operator_to_reg(op):
-    if op == '**':
-        return r'\*\*'
-    elif op == '*':
-        return r'\*'
-    elif op == '+':
-        return r'\+'
-    elif op == '/':
-        return r'\/'
-    elif op == '^':
-        return r'\^'
-    elif op == '|':
-        return r'\|'
-    elif op == '(':
-        return r'\('
-    elif op == ')':
-        return r'\)'
+    conversion = {
+        '**': r'\*\*',
+        '*': r'\*',
+        '+': r'\+',
+        '/': r'\/',
+        '^': r'\^',
+        '|': r'\|',
+        '(': r'\(',
+        ')': r'\)',
+    }
+
+    if op in conversion:
+        return conversion[op]
     return op
