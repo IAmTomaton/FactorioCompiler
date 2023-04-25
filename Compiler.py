@@ -115,10 +115,15 @@ class Compiler:
         stack = []
         temp_var_index = 0
 
-        def get_arg_from_stack(reg):
+        def load_arg_from_stack(reg):
+            nonlocal temp_var_index
             arg = stack.pop()
             addr, cmd = self.load_to_reg(arg, reg)
-            return addr, cmd, arg in self.temp_variables
+            if cmd:
+                commands.append(cmd)
+            if arg in self.temp_variables:
+                temp_var_index -= 1
+            return addr
 
         def is_cmd(a):
             return not (a is int or a.isdigit() or a in self.variables)
@@ -130,30 +135,19 @@ class Compiler:
                 if s in constants.one_seat_operation_to_machine_cmd:
                     machine_cmd = constants.one_seat_operation_to_machine_cmd[s]
 
-                    addr0, cmd0, is_temp = get_arg_from_stack(1)
-                    if cmd0:
-                        commands.append(cmd0)
-                    if is_temp:
-                        temp_var_index -= 1
+                    addr0 = load_arg_from_stack(1)
 
                     commands.append(MachineCommand.tokens_to_command([machine_cmd, addr0]))
 
                 elif s in constants.two_seat_operation_to_machine_cmd:
                     machine_cmd = constants.two_seat_operation_to_machine_cmd[s]
 
-                    addr0, cmd0, is_temp = get_arg_from_stack(1)
-                    if cmd0:
-                        commands.append(cmd0)
-                    if is_temp:
-                        temp_var_index -= 1
-
-                    addr1, cmd1, is_temp = get_arg_from_stack(2)
-                    if cmd1:
-                        commands.append(cmd1)
-                    if is_temp:
-                        temp_var_index -= 1
+                    addr0 = load_arg_from_stack(1)
+                    addr1 = load_arg_from_stack(2)
 
                     commands.append(MachineCommand.tokens_to_command([machine_cmd, addr1, addr0]))
+                else:
+                    raise Exception(f'Unknown math operation "{s}"')
 
                 if (i + 1 < len(postfix_exp) and is_cmd(postfix_exp[i + 1])) or \
                         (i + 2 < len(postfix_exp) and is_cmd(postfix_exp[i + 2]) and
