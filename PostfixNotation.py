@@ -5,10 +5,9 @@ class PostfixNotation:
 
     def __init__(self):
         self.precedence = {
-            '(': 0,
-            ')': 0,
-            '**': 12,
-            '->': 11,
+            '(': -1,
+            ')': -1,
+            'xor': 0,
             'or': 1,
             'and': 2,
             'not': 3,
@@ -29,6 +28,8 @@ class PostfixNotation:
             '/': 10,
             '%': 10,
             '~': 11,
+            '->': 11,
+            '**': 12,
         }
 
     def get_operators(self):

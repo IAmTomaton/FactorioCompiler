@@ -10,9 +10,9 @@ machine_cmd_id_dict = {
     'pow': (2, 6),  # **
     'shl': (2, 7),  # <<
     'shr': (2, 8),  # >>
-    'and': (2, 9),
-    'or': (2, 10),
-    'xor': (2, 11),
+    '&': (2, 9),
+    '|': (2, 10),
+    '^': (2, 11),
 
     'lth': (2, 12),  # <
     'gth': (2, 13),  # >
@@ -24,6 +24,10 @@ machine_cmd_id_dict = {
 
     'inc': (2, 19),  # + 1
     'dec': (2, 20),  # - 1
+
+    'and': (2, 21),
+    'or': (2, 22),
+    'xor': (2, 23),
 
     'jmp': (3, 1),
     'jmpne0': (3, 2),
@@ -49,16 +53,20 @@ two_seat_operation_to_machine_cmd = {
     '**': 'pow',
     '<<': 'shl',
     '>>': 'shr',
-    'and': 'and',
-    'or': 'or',
-    'xor': 'xor',
+    '&': '&',
+    '|': '|',
+    '^': '^',
 
     '>': 'gth',
     '<': 'lth',
     '==': 'qe',
     '>=': 'geth',
     '<=': 'leth',
-    '!=': 'neq'
+    '!=': 'neq',
+
+    'and': 'and',
+    'or': 'or',
+    'xor': 'xor',
 }
 
 one_seat_operation_to_machine_cmd = {
