@@ -2,6 +2,7 @@ import re
 
 import constants
 from MachineCommand import MachineCommand
+from MemoryManager import MemoryManager
 from PostfixNotation import PostfixNotation
 from program_blocks.ProgramBlock import ProgramBlock
 from program_blocks.ProgramBlockElif import ProgramBlockElif
@@ -23,32 +24,15 @@ program_blocks = [
 
 class Compiler:
 
-    def __init__(self):
-        self.register_count = 6
-        self.temp_variables_reg_offset = 3
-        self.temp_variables_reg_count = self.register_count - self.temp_variables_reg_offset
-
-        self.next_var_index = self.register_count
+    def __init__(self, memory_manager):
+        self.memory_manager = memory_manager
         self.postfix_notation = PostfixNotation()
-
-        self.variables = {}
-        self.temp_variables = []
 
         self.regexps = {
             fr'input\(({constants.variable_regex})\)': self.input,
             fr'display\(({constants.var_val_regex})\)': self.display,
             fr'({constants.variable_regex})\s*=\s*(.*)': self.compile_value_assignment
         }
-
-        self.temp_var_prefix = '__temp_var'
-
-        for i in range(self.temp_variables_reg_count):
-            temp_var = self.get_temp_var_by_index(i)
-            self.variables[temp_var] = i + self.temp_variables_reg_offset
-            self.temp_variables.append(temp_var)
-
-        self.ALU_output_var = '__ALU_output'
-        self.variables[self.ALU_output_var] = 0
 
     def compile_program(self, program):
         program_block = _split_program_to_blocks_by_indents(program)
@@ -60,7 +44,7 @@ class Compiler:
 
     def program_block_to_machine_commands(self, program_block: ProgramBlock, offset, have_next_block):
         commands_in_block = []
-        init_commands = program_block.init_machine_commands(self)
+        init_commands = program_block.init_machine_commands(self, self.memory_manager)
 
         for i, line in enumerate(program_block.block):
             if isinstance(line, str):
@@ -73,8 +57,8 @@ class Compiler:
                                                                                 len(commands_in_block),
                                                                                 j < len(line) - 1)
 
-        entry_commands, end_commands = program_block.entry_machine_commands(self, offset, len(commands_in_block),
-                                                                            have_next_block)
+        entry_commands, end_commands = program_block.entry_machine_commands(self, self.memory_manager, offset,
+                                                                            len(commands_in_block), have_next_block)
 
         return init_commands + entry_commands + commands_in_block + end_commands
 
@@ -85,25 +69,8 @@ class Compiler:
                 return func(*res.groups())
         raise Exception(f'Unresolved command "{line}"')
 
-    def try_add_variable(self, var):
-        if var not in self.variables:
-            self.variables[var] = self.next_var_index
-            self.next_var_index += 1
-            return self.variables[var], True
-        return self.variables[var], False
-
-    def get_temp_var_by_index(self, index):
-        return self.temp_var_prefix + str(index)
-
-    def get_or_create_temp_var(self, index):
-        temp_var = self.get_temp_var_by_index(index)
-        address, result = self.try_add_variable(temp_var)
-        if result:
-            self.temp_variables.append(temp_var)
-        return temp_var, result
-
     def compile_value_assignment(self, var, exp):
-        address, _ = self.try_add_variable(var)
+        address, _ = self.memory_manager.try_add_variable(var)
 
         commands = self.compile_math_expression(exp, address)
 
@@ -118,15 +85,15 @@ class Compiler:
         def load_arg_from_stack(reg):
             nonlocal temp_var_index
             arg = stack.pop()
-            addr, cmd = self.load_to_reg(arg, reg)
+            addr, cmd = self.memory_manager.load_to_reg(arg, reg)
             if cmd:
                 commands.append(cmd)
-            if arg in self.temp_variables:
+            if arg in self.memory_manager.temp_variables:
                 temp_var_index -= 1
             return addr
 
         def is_cmd(a):
-            return not (a is int or a.isdigit() or a in self.variables)
+            return not (a is int or a.isdigit() or a in self.memory_manager.variables)
 
         for i, s in enumerate(postfix_exp):
             if not is_cmd(s):
@@ -152,55 +119,29 @@ class Compiler:
                 if (i + 1 < len(postfix_exp) and is_cmd(postfix_exp[i + 1])) or \
                         (i + 2 < len(postfix_exp) and is_cmd(postfix_exp[i + 2]) and
                          s in constants.two_seat_operation_to_machine_cmd):
-                    stack.append(self.ALU_output_var)
+                    stack.append(self.memory_manager.ALU_output_var)
                 elif i + 1 < len(postfix_exp):
-                    temp_var, _ = self.get_or_create_temp_var(temp_var_index)
+                    temp_var, _ = self.memory_manager.get_or_create_temp_var(temp_var_index)
                     temp_var_index += 1
                     stack.append(temp_var)
 
-                    cmd = self.move(0, self.variables[temp_var])
+                    cmd = MachineCommand.move(0, self.memory_manager.variables[temp_var])
                     commands.append(cmd)
 
         if len(postfix_exp) == 1:
-            cmd = self.move_or_put(stack.pop(), output_address)
+            cmd = self.memory_manager.move_or_put(stack.pop(), output_address)
         else:
-            cmd = self.move(0, output_address)
+            cmd = MachineCommand.move(0, output_address)
         commands.append(cmd)
 
         return commands
 
-    def load_to_reg(self, arg, reg):
-        if reg <= 0 or reg >= self.register_count:
-            raise Exception(f'Reg out of rage {reg}')
-
-        if arg is int or arg.isdigit():
-            return reg, self.put_value(arg, reg)
-
-        address = self.variables[arg]
-        if address < self.register_count:
-            return address, None
-        return reg, self.move(address, reg)
-
-    def move_or_put(self, arg, address):
-        if arg is int or arg.isdigit():
-            return self.put_value(arg, address)
-        else:
-            return self.move(self.variables[arg], address)
-
-    def move(self, address0, address1):
-        command = MachineCommand.tokens_to_command(['mov', address0, address1])
-        return command
-
-    def put_value(self, val, address):
-        command = MachineCommand.tokens_to_command(['put', val, address])
-        return command
-
     def display(self, arg):
-        return [self.move_or_put(arg, 1),
+        return [self.memory_manager.move_or_put(arg, 1),
                 MachineCommand(101, 2, 1)]
 
     def input(self, arg):
-        return [MachineCommand(102, 1, self.variables[arg])]
+        return [MachineCommand(102, 1, self.memory_manager.variables[arg])]
 
 
 def _count_indents(line):

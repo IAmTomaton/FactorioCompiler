@@ -12,5 +12,5 @@ class ProgramBlockElse(ProgramBlock):
     def entry_offset(self):
         return 1
 
-    def entry_machine_commands(self, compiler, offset, block_len, have_next_block):
+    def entry_machine_commands(self, compiler, memory_manager, offset, block_len, have_next_block):
         return [MachineCommand.jmp(offset + self.entry_offset + block_len)], []

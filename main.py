@@ -3,7 +3,9 @@ import base64
 import json
 import zlib
 
+from Compiler import Compiler
 from MachineCommand import MachineCommand
+from MemoryManager import MemoryManager
 
 
 def combinators_to_blueprint(combinators):
@@ -44,16 +46,16 @@ def machine_commands_to_dense_combinators(commands):
 
 
 def compile_program(input_file, blueprint_file, machine_commands_file):
-    from Compiler import Compiler
-    compiler = Compiler()
+    memory_manager = MemoryManager(6)
+    compiler = Compiler(memory_manager)
 
     with open(input_file, 'r') as program:
         lines = list(map(lambda line: line.replace('\n', ''), program))
     commands = compiler.compile_program(lines)
 
     print(f'{len(commands)} ROM cells used')
-    print(f'{len(compiler.variables)} RAM cells required')
-    print(f'{len(compiler.temp_variables)} Temp variables count')
+    print(f'{len(compiler.memory_manager.variables)} RAM cells required')
+    print(f'{len(compiler.memory_manager.temp_variables)} Temp variables count')
 
     if machine_commands_file:
         with open(machine_commands_file, 'w') as file:

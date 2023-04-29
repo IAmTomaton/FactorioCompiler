@@ -14,7 +14,7 @@ class ProgramBlockIf(ProgramBlock):
     def entry_offset(self):
         return 2
 
-    def entry_machine_commands(self, compiler, offset, block_len, have_next_block):
+    def entry_machine_commands(self, compiler, memory_manager, offset, block_len, have_next_block):
         exp = re.fullmatch(self.regex, self.entry_command).groups()[0]
 
         exp_commands = compiler.compile_math_expression(exp, 1)

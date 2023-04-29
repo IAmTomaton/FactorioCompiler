@@ -18,7 +18,7 @@ class ProgramBlockWhile(ProgramBlock):
     def end_offset(self):
         return 1
 
-    def init_machine_commands(self, compiler):
+    def init_machine_commands(self, compiler, memory_manager):
         exp = re.fullmatch(self.regex, self.entry_command).groups()[0]
 
         exp_commands = compiler.compile_math_expression(exp, 1)
@@ -27,7 +27,7 @@ class ProgramBlockWhile(ProgramBlock):
 
         return exp_commands
 
-    def entry_machine_commands(self, compiler, offset, block_len, have_next_block):
+    def entry_machine_commands(self, compiler, memory_manager, offset, block_len, have_next_block):
         check_commands = [
             MachineCommand.jmp_if_eq_0(1, offset + self.init_len + self.entry_offset + block_len + self.end_offset)
         ]

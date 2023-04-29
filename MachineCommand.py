@@ -94,6 +94,14 @@ class MachineCommand:
         return self.__str__()
 
     @staticmethod
+    def move(addr0, addr1):
+        return MachineCommand(*machine_cmd_id_dict['mov'], arg0=addr0, arg1=addr1)
+
+    @staticmethod
+    def put(val, addr):
+        return MachineCommand(*machine_cmd_id_dict['put'], arg0=val, arg1=addr)
+
+    @staticmethod
     def jmp(index):
         return MachineCommand(*machine_cmd_id_dict['jmp'], arg2=index)
 
